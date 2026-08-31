@@ -1,6 +1,6 @@
 # CHANA Dashboard
 
-The CHANA Dashboard is a powerful, full-stack application built to run state-of-the-art deep learning models for automated cell segmentation, circularity analysis, and spatial morphology mapping on biological specimen imagery.
+The CHANA Dashboard is a efficient, full-stack application built to run state-of-the-art deep learning models for automated cell segmentation, circularity analysis, and spatial morphology mapping on in vitro, TRAP-stained osteoclast.
 
 ## Tech Stack
 * **Frontend:** React + Vite + Tailwind CSS
