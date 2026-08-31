@@ -267,7 +267,7 @@ If you use CHANA in your research, please cite:
 ```bibtex
 @software{chana2026,
   title = {CHANA: Cell Histology Automated Neural Network Analyzer},
-  author = {Szabo, Sarah and collaborators},
+  author = {Szabo, Sarah and Tripathy, Yuvraj},
   year = {2026},
   url = {https://github.com/yuvipaloozie/CHANA}
 }
