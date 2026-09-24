@@ -240,7 +240,7 @@ export default function App() {
                 
                 if ("Notification" in window && Notification.permission === "granted") {
                   new Notification("Analysis Complete", {
-                    body: `CHANA has finished processing ${file.name}. Detected ${data.total_cells} cells.`,
+                    body: `OCLAST has finished processing ${file.name}. Detected ${data.total_cells} cells.`,
                     icon: "/vite.svg"
                   });
                 }
@@ -273,7 +273,7 @@ export default function App() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `chana_osteoclasts_${Date.now()}.csv`);
+    link.setAttribute("download", `oclast_osteoclasts_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -558,7 +558,7 @@ export default function App() {
           <div className="p-6 shrink-0 flex items-center justify-between">
             <h1 className="text-xl font-bold tracking-tight text-[#1a181a] flex items-center">
               <Hexagon size={22} className="mr-2 text-[#7b1738]" />
-              CHANA
+              OCLAST
             </h1>
             <span className="text-[10px] bg-rose-50 text-[#7b1738] font-bold px-2 py-0.5 rounded-full border border-rose-100">
               v2.2
