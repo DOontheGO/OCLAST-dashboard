@@ -28,10 +28,14 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    def open_browser():
-        time.sleep(1)
-        webbrowser.open("http://127.0.0.1:8000")
-    threading.Thread(target=open_browser, daemon=True).start()
+    if not os.environ.get("VERCEL"):
+        def open_browser():
+            time.sleep(1)
+            try:
+                webbrowser.open("http://127.0.0.1:8000")
+            except Exception:
+                pass
+        threading.Thread(target=open_browser, daemon=True).start()
     yield
 
 app = FastAPI(title="OCLAST Dashboard API", lifespan=lifespan)
@@ -120,7 +124,7 @@ async def predict_endpoint(file: UploadFile = File(...), model_type: str = Form(
             
             heatmap_data[y:y+IMG_SIZE, x:x+IMG_SIZE] = count
             
-            patch_rgb = cv2.cvtColor(patch, cv2.COLOR_RGB2RGB if hasattr(cv2, 'COLOR_RGB2RGB') else cv2.COLOR_BGR2RGB)
+            patch_rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
             overlay = np.zeros_like(patch_rgb)
             if count > 0:
                 overlay[mask > 0] = [255, 0, 255]
@@ -229,12 +233,27 @@ async def save_training_mask_endpoint(req: SaveMaskRequest):
                 else:
                     ai_cells += 1
 
-    # Local training data directories
-    training_dir = os.path.join(os.path.dirname(__file__), "training_data")
-    masks_dir = os.path.join(training_dir, "masks")
-    images_dir = os.path.join(training_dir, "images")
-    os.makedirs(masks_dir, exist_ok=True)
-    os.makedirs(images_dir, exist_ok=True)
+    def get_training_dirs():
+        training_dir = os.environ.get("TRAINING_DATA_DIR")
+        if not training_dir:
+            if os.environ.get("VERCEL"):
+                training_dir = "/tmp/training_data"
+            else:
+                training_dir = os.path.join(os.path.dirname(__file__), "training_data")
+        masks_dir = os.path.join(training_dir, "masks")
+        images_dir = os.path.join(training_dir, "images")
+        try:
+            os.makedirs(masks_dir, exist_ok=True)
+            os.makedirs(images_dir, exist_ok=True)
+        except OSError:
+            training_dir = "/tmp/training_data"
+            masks_dir = os.path.join(training_dir, "masks")
+            images_dir = os.path.join(training_dir, "images")
+            os.makedirs(masks_dir, exist_ok=True)
+            os.makedirs(images_dir, exist_ok=True)
+        return training_dir, masks_dir, images_dir
+
+    training_dir, masks_dir, images_dir = get_training_dirs()
     
     # Save .tif binary mask using tifffile
     mask_path = os.path.join(masks_dir, mask_filename)
@@ -291,15 +310,20 @@ async def save_training_mask_endpoint(req: SaveMaskRequest):
         "manual_cells": manual_cells,
         "ai_cells": ai_cells,
         "preview": preview_b64,
-        "download_url": f"http://localhost:8000/download-mask/{mask_filename}",
+        "download_url": f"/download-mask/{mask_filename}",
         "total_dataset_count": len(manifest)
     }
 
 @app.get("/download-mask/{mask_filename}")
 async def download_mask_endpoint(mask_filename: str):
-    mask_path = os.path.join(os.path.dirname(__file__), "training_data", "masks", mask_filename)
+    base_dir = os.path.join(os.path.dirname(__file__), "training_data")
+    mask_path = os.path.join(base_dir, "masks", mask_filename)
     if not os.path.exists(mask_path):
-        return {"error": "Mask file not found"}
+        tmp_path = os.path.join("/tmp/training_data", "masks", mask_filename)
+        if os.path.exists(tmp_path):
+            mask_path = tmp_path
+        else:
+            return {"error": "Mask file not found"}
     return FileResponse(
         mask_path, 
         media_type="image/tiff", 
@@ -309,6 +333,8 @@ async def download_mask_endpoint(mask_filename: str):
 @app.get("/training-data/list")
 async def list_training_data_endpoint():
     manifest_path = os.path.join(os.path.dirname(__file__), "training_data", "manifest.json")
+    if not os.path.exists(manifest_path):
+        manifest_path = os.path.join("/tmp/training_data", "manifest.json")
     if os.path.exists(manifest_path):
         try:
             with open(manifest_path, "r") as mf:
