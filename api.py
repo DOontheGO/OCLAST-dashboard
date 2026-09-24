@@ -15,11 +15,11 @@ from pydantic import BaseModel
 
 uploaded_images_cache = {}
 
-from chana.config import IMG_SIZE
-from chana.data import pad_image, get_tile_coordinates
-from chana.preprocessor import preprocess_v9
-from chana.onnx_engine import get_model, predict_batch
-from chana.biology import extract_biology
+from oclast.config import IMG_SIZE
+from oclast.data import pad_image, get_tile_coordinates
+from oclast.preprocessor import preprocess_v9
+from oclast.onnx_engine import get_model, predict_batch
+from oclast.biology import extract_biology
 
 import threading
 import webbrowser
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     threading.Thread(target=open_browser, daemon=True).start()
     yield
 
-app = FastAPI(title="CHANA Dashboard API", lifespan=lifespan)
+app = FastAPI(title="OCLAST Dashboard API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
