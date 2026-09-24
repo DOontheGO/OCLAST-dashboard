@@ -23,6 +23,18 @@
       "dest": "api.py"
     },
     {
+      "src": "/save-training-mask",
+      "dest": "api.py"
+    },
+    {
+      "src": "/download-mask/(.*)",
+      "dest": "api.py"
+    },
+    {
+      "src": "/training-data/(.*)",
+      "dest": "api.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/$1"
     }
