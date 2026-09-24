@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from scipy import ndimage
 from skimage import measure
 from skimage.feature import peak_local_max
@@ -7,7 +8,7 @@ import math
 from .config import MIN_AREA, MIN_DIST
 
 def extract_biology(prob_map):
-    """Watershed separation and morphometric extraction."""
+    """Watershed separation and morphometric extraction with contour generation."""
     mask = (prob_map > 0.5).astype(np.uint8)
     mask = ndimage.binary_fill_holes(mask).astype(np.uint8)
 
@@ -29,6 +30,7 @@ def extract_biology(prob_map):
     circularities = []
     solidities = []
     eccentricities = []
+    contours = []
     
     for r in props:
         areas.append(int(r.area))
@@ -41,4 +43,15 @@ def extract_biology(prob_map):
         solidities.append(r.solidity)
         eccentricities.append(r.eccentricity)
 
-    return mask, len(props), centroids, areas, circularities, solidities, eccentricities
+        # Extract polygon boundary points for vector overlay and manual editing
+        region_mask = (labels == r.label).astype(np.uint8) * 255
+        cnts, _ = cv2.findContours(region_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if cnts:
+            # Approximate polygon to reduce payload size while preserving fidelity
+            approx = cv2.approxPolyDP(cnts[0], 1.2, True)
+            pts = [{"x": int(pt[0][0]), "y": int(pt[0][1])} for pt in approx]
+            contours.append(pts)
+        else:
+            contours.append([])
+
+    return mask, len(props), centroids, areas, circularities, solidities, eccentricities, contours

@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import cv2
 import numpy as np
@@ -55,15 +56,14 @@ if uploaded_file is not None:
             preds = predict_batch(session, batch_arr)
             prob_map = preds[0]
             
-            mask, count, centroids, areas, circs, solids, eccs = extract_biology(prob_map)
+            mask, count, centroids, areas, circs, solids, eccs, *rest = extract_biology(prob_map)
             
             total_cells += count
             all_areas.extend(areas)
             all_circs.extend(circs)
             all_solids.extend(solids)
-            all_eccs.extend(eccs)
-            
-            tile_name = f"tile_y{y}_x{x}"
+            base_name = os.path.splitext(uploaded_file.name)[0] if uploaded_file else "specimen"
+            tile_name = f"{base_name}_tile_{i+1}"
             tile_csv_data.append({"Tile_Name": tile_name, "Y": y, "X": x, "Cell_Count": count})
             
             # Fill heatmap data with count (spread across the tile region)
